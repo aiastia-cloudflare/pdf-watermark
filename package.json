@@ -80,7 +80,7 @@
     "build-cf": "BUILD_PATH=dist PUBLIC_URL=./ node scripts/build.js",
     "deploy-cf": "npm run build-cf && wrangler publish",
     "test": "node scripts/test.js"
-  }
+  },
   "eslintConfig": {
     "extends": [
       "react-app",
