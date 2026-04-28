@@ -107,8 +107,11 @@ const App: React.FC = () => {
       })
       return
     }
+    
+    const currentSize = calculateWatermarkSize()
+    
     if (pageWidth.current) {
-      const widthPercent = watermarkSize.width / pageWidth.current
+      const widthPercent = currentSize.width / pageWidth.current
       setWatermarkPreviewSize(widthPercent)
     }
     if (!watermarkUnitRef.current) return
@@ -134,7 +137,7 @@ const App: React.FC = () => {
       }
       reader.readAsArrayBuffer(blob)
     })
-  }, [devicePixelRatio, waterMarkValue, messageApi, file, watermarkSize])
+  }, [devicePixelRatio, waterMarkValue, messageApi, file, textPadding, waterMarkType])
 
   const handleUpload = () => {
     if (uploadInputRef.current) {
@@ -211,6 +214,19 @@ const App: React.FC = () => {
     waterMarkValue.splice(index, 1)
     setWaterMarkValue([...waterMarkValue])
   }
+  // 计算基于文字内容和间距的水印单元大小
+  const calculateWatermarkSize = () => {
+    if (waterMarkType === WaterMarkType.TEXT) {
+      // 允许负数间距，当间距为负数时可以让水印重叠
+      const minWidth = Math.max(50, waterUnitWidth + textPadding * 2) // 最小宽度50px
+      const minHeight = Math.max(30, waterUnitHeight + textPadding * 2) // 最小高度30px
+      return { width: minWidth, height: minHeight }
+    }
+    return watermarkSize
+  }
+
+  const currentWatermarkSize = calculateWatermarkSize()
+
   const handleDownload = async () => {
     const pdfDoc = await PDFDocument.load(file);
     if (!watermarkUnit?.bufferData) return
@@ -409,12 +425,13 @@ const App: React.FC = () => {
         if (waterMarkType === WaterMarkType.TEXT) {
           return (
             <div
+              key={index}
               className='watermark_item'
               style={{
                 fontSize: `${textSize}px`,
                 color: `${textColor}`,
                 fontWeight: '400',
-                marginBottom: `${index === waterMarkValue.length - 1 ? 0 : textPadding}px`,
+                marginBottom: `${textPadding}px`,
               }}
             >
               {item}
@@ -422,7 +439,7 @@ const App: React.FC = () => {
           )
         }
         if (waterMarkType === WaterMarkType.IMAGE) {
-          return <img src={item} alt="" />
+          return <img key={index} src={item} alt="" />
         }
         return null
       })
@@ -522,13 +539,12 @@ const App: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexDirection: 'column',
-                  width: `${watermarkSize.width}px`,
-                  height: `${watermarkSize.height}px`,
-                  padding: `${waterUnitPadding}px`,
+                  width: `${currentWatermarkSize.width}px`,
+                  height: `${currentWatermarkSize.height}px`,
+                  padding: `${Math.max(0, waterUnitPadding + textPadding)}px`,
                   transform: `rotate(${-rotate}deg)`,
                   transformOrigin: 'center',
                 }}
-                ref={watermarkUnitRef}
               >
                 {waterUnitConttent}
               </div>
@@ -641,7 +657,14 @@ const App: React.FC = () => {
                     </div>
                     <div className="rule_item">
                       <div className="rule_label">水印间距</div>
-                      <InputNumber controls={false} onKeyDown={handlePreventKeyEvent} size="small" min={0} value={textPadding} onChange={(value) => { if (value !== null) { setTextPadding(value) } }}></InputNumber>
+                      <InputNumber 
+                        controls={false} 
+                        onKeyDown={handlePreventKeyEvent} 
+                        size="small" 
+                        min={-50} 
+                        value={textPadding} 
+                        onChange={(value) => { if (value !== null) { setTextPadding(value) } }}
+                      />
                     </div>
                   </>
                 )}
@@ -660,9 +683,9 @@ const App: React.FC = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexDirection: 'column',
-                        width: `${watermarkSize.width}px`,
-                        height: `${watermarkSize.height}px`,
-                        padding: `${waterUnitPadding}px`,
+                        width: `${currentWatermarkSize.width}px`,
+                        height: `${currentWatermarkSize.height}px`,
+                        padding: `${Math.max(0, waterUnitPadding + textPadding)}px`,
                         transform: `rotate(${-rotate}deg)`,
                         transformOrigin: 'center',
                       }}
@@ -693,4 +716,20 @@ const App: React.FC = () => {
 }
 
 export default App;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
